@@ -1,0 +1,353 @@
+openapi: 3.0.3
+info:
+  title: hactl-companion API
+  version: 0.1.0
+  description: HA Add-on exposing internal HA features for hactl CLI
+servers:
+- url: /
+  description: HA Ingress
+paths:
+  /v1/health:
+    get:
+      summary: Liveness check
+      tags:
+      - health
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  version:
+                    type: string
+  /v1/config/files:
+    get:
+      summary: List YAML config files
+      tags:
+      - config
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  files:
+                    type: array
+                    items:
+                      type: string
+  /v1/config/file:
+    get:
+      summary: Read a config file
+      tags:
+      - config
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  path:
+                    type: string
+                  content:
+                    type: string
+      parameters:
+      - name: path
+        in: query
+        required: true
+        schema:
+          type: string
+    put:
+      summary: Write a config file (dry-run or apply)
+      tags:
+      - config
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  diff:
+                    type: string
+      parameters:
+      - name: path
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: dry_run
+        in: query
+        required: false
+        schema:
+          type: string
+          default: 'true'
+      requestBody:
+        content:
+          text/plain:
+            schema:
+              type: string
+        required: true
+  /v1/config/block:
+    get:
+      summary: Read a specific block from a config file
+      tags:
+      - config
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  path:
+                    type: string
+                  id:
+                    type: string
+                  content:
+                    type: string
+      parameters:
+      - name: path
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: id
+        in: query
+        required: true
+        schema:
+          type: string
+  /v1/supervisor/info:
+    get:
+      summary: System info via Supervisor
+      tags:
+      - supervisor
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+  /v1/supervisor/addons:
+    get:
+      summary: Installed add-ons
+      tags:
+      - supervisor
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  addons:
+                    type: array
+                    items:
+                      type: object
+  /v1/supervisor/backups:
+    get:
+      summary: Backup list
+      tags:
+      - supervisor
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  backups:
+                    type: array
+                    items:
+                      type: object
+  /v1/supervisor/backups/new:
+    post:
+      summary: Create a new backup
+      tags:
+      - supervisor
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+  /v1/supervisor/addon/{slug}/logs:
+    get:
+      summary: Add-on logs
+      tags:
+      - supervisor
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: string
+      parameters:
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
+  /v1/logs/core:
+    get:
+      summary: HA Core logs
+      tags:
+      - logs
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema: &id001
+                type: object
+                properties:
+                  source:
+                    type: string
+                  lines:
+                    type: array
+                    items:
+                      type: string
+                  count:
+                    type: integer
+      parameters:
+      - name: lines
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 100
+      - name: level
+        in: query
+        required: false
+        schema:
+          type: string
+  /v1/logs/supervisor:
+    get:
+      summary: Supervisor logs
+      tags:
+      - logs
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema: *id001
+      parameters:
+      - name: lines
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 100
+  /v1/logs/addon/{slug}:
+    get:
+      summary: Add-on logs
+      tags:
+      - logs
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema: *id001
+      parameters:
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: lines
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 100
+  /v1/ha/reload/{domain}:
+    post:
+      summary: Reload a domain
+      tags:
+      - ha-cli
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema: &id002
+                type: object
+                properties:
+                  action:
+                    type: string
+                  exit_code:
+                    type: integer
+                  stdout:
+                    type: string
+                  stderr:
+                    type: string
+      parameters:
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+  /v1/ha/restart:
+    post:
+      summary: Restart HA Core
+      tags:
+      - ha-cli
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema: *id002
+  /v1/ha/resolution:
+    get:
+      summary: Resolution center info
+      tags:
+      - ha-cli
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema: *id002
+  /v1/ha/check-config:
+    post:
+      summary: Validate HA configuration
+      tags:
+      - ha-cli
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema: *id002
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+security:
+- bearerAuth: []

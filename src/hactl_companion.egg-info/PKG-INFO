@@ -1,0 +1,13 @@
+Metadata-Version: 2.4
+Name: hactl-companion
+Version: 0.1.0
+Requires-Python: >=3.11
+Requires-Dist: aiohttp>=3.9
+Requires-Dist: ruamel.yaml>=0.18
+Provides-Extra: dev
+Requires-Dist: pytest>=8.0; extra == "dev"
+Requires-Dist: pytest-aiohttp>=1.0; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.23; extra == "dev"
+Requires-Dist: ruff>=0.4; extra == "dev"
+Requires-Dist: mypy>=1.10; extra == "dev"
+Requires-Dist: openapi-spec-validator>=0.7; extra == "dev"
