@@ -43,13 +43,38 @@ uv venv .venv
 uv pip install -e ".[dev]"
 
 # Lint
-.venv/Scripts/ruff check src/ tests/
+ruff check src/ tests/
 
-# Test
-.venv/Scripts/pytest -v
+# Unit tests
+pytest -v
 
-# Type check
-.venv/Scripts/mypy
+# Format
+ruff format src/ tests/
+```
+
+### Integration Tests
+
+Live tests against real HA Core + companion Docker containers. Requires Docker Desktop.
+
+```bash
+# Install integration deps
+uv pip install -e ".[dev,integration]"
+
+# Run integration tests (compose up → test → compose down)
+make test-int
+```
+
+The integration suite:
+- Spins up HA Core (stable) + companion on a shared Docker bridge network
+- Performs headless HA onboarding (user creation + long-lived token)
+- Tests all API endpoints against the live stack
+- Tears down containers and volumes on completion
+
+```bash
+# Or manually:
+docker compose -f docker-compose.integration.yaml up -d --build
+pytest tests/integration -v --tb=short
+docker compose -f docker-compose.integration.yaml down -v
 ```
 
 ## Security

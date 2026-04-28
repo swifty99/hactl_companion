@@ -84,6 +84,17 @@ Tracking file for hactl-companion implementation phases.
 - [x] Conformance: all routes ↔ spec bidirectional check
 - [x] test_openapi.py — 6 tests
 
+## Integration Testing ✅
+
+Live Docker-based integration tests against real HA Core + companion containers.
+
+- [x] `docker-compose.integration.yaml` — HA Core + companion on shared bridge network, named volume
+- [x] `tests/integration/conftest.py` — session-scoped compose lifecycle, HA readiness polling, headless 5-step onboarding (create user → auth code → core config → analytics → long-lived WS token)
+- [x] `tests/integration/test_auth.py` — 5 tests: token enforcement, ingress bypass, health exemption
+- [x] `tests/integration/test_live.py` — 15 tests: health, config read (list, read, traversal, secrets deny), config write (dry-run, apply, traversal, invalid YAML), core logs (read, filter)
+- [x] `tests/integration/test_no_supervisor.py` — 10 tests: supervisor proxy 502, log proxy 502, CLI bridge 502 (no Supervisor available in standalone HA Core)
+- [x] `Makefile` targets: `make test` (unit), `make test-int` (integration), `make lint`, `make fmt`, `make clean`
+
 ## Phase 8: hactl Integration ☐
 
 ## Phase 9: Packaging & HACS ☐
@@ -91,6 +102,8 @@ Tracking file for hactl-companion implementation phases.
 ---
 
 ## Test Summary
+
+### Unit Tests
 
 | Phase | Tests | Status |
 |-------|-------|--------|
@@ -104,8 +117,18 @@ Tracking file for hactl-companion implementation phases.
 | 7 | 6 | ✅ |
 | **Total** | **51** | **All passing** |
 
+### Integration Tests
+
+| Suite | Tests | Status |
+|-------|-------|--------|
+| Auth | 5 | ✅ |
+| Live (health, config, logs) | 15 | ✅ |
+| No-Supervisor (502s) | 10 | ✅ |
+| **Total** | **30** | **All passing** |
+
 ## Tooling
 
 - **Runtime**: Python 3.11+, aiohttp, ruamel.yaml
 - **Dev**: uv, ruff, mypy, pytest, pytest-aiohttp
+- **Integration**: Docker, docker-compose, requests, websocket-client
 - **CI**: GitHub Actions (lint + test + docker build)

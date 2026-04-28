@@ -11,3 +11,7 @@ Requires-Dist: pytest-asyncio>=0.23; extra == "dev"
 Requires-Dist: ruff>=0.4; extra == "dev"
 Requires-Dist: mypy>=1.10; extra == "dev"
 Requires-Dist: openapi-spec-validator>=0.7; extra == "dev"
+Provides-Extra: integration
+Requires-Dist: pytest>=8.0; extra == "integration"
+Requires-Dist: requests>=2.31; extra == "integration"
+Requires-Dist: websocket-client>=1.7; extra == "integration"
