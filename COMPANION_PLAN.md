@@ -105,7 +105,7 @@ hactl-companion/
 | 5 | Direct Logs (`/v1/logs/*`) | ☐ |
 | 6 | HA CLI Bridge (`/v1/ha/*`) | ☐ |
 | 7 | OpenAPI Export + Schema-Conformance-Tests | ☐ |
-| 8 | hactl-Integration: Companion-Client + Contract-Tests | ☐ |
+| 8 | hactl-Integration: Companion-Client + Contract-Tests | ☐ → [HACTL_INTEGRATION.md](HACTL_INTEGRATION.md) |
 | 9 | Packaging: HACS, Release-Workflow, Docs | ☐ |
 
 ---

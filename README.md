@@ -77,6 +77,10 @@ pytest tests/integration -v --tb=short
 docker compose -f docker-compose.integration.yaml down -v
 ```
 
+## hactl Integration
+
+For instructions on implementing companion support in the hactl Go CLI (downloading from GitHub, Docker test setup, Go client, end-to-end tests), see [HACTL_INTEGRATION.md](HACTL_INTEGRATION.md).
+
 ## Security
 
 - Accessible only via HA Ingress (no exposed port)

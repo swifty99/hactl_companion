@@ -97,6 +97,17 @@ Live Docker-based integration tests against real HA Core + companion containers.
 
 ## Phase 8: hactl Integration ☐
 
+See [HACTL_INTEGRATION.md](HACTL_INTEGRATION.md) for full implementation & test instructions.
+
+- [ ] Go companion client (`internal/companion/client.go` + `types.go`)
+- [ ] Vendor OpenAPI spec (`testdata/companion-v1.yaml`)
+- [ ] Docker Compose for hactl integration (`docker-compose.companion.yaml`)
+- [ ] Go test helpers: compose lifecycle, headless onboarding, wait utils
+- [ ] Integration tests: health, config CRUD, logs, supervisor 502, CLI 502
+- [ ] OpenAPI contract tests (kin-openapi spec validation)
+- [ ] `make test-companion` Makefile target
+- [ ] CI job: `companion-integration` in GitHub Actions
+
 ## Phase 9: Packaging & HACS ☐
 
 ---
