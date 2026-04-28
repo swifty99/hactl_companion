@@ -16,9 +16,7 @@ async def test_list_files(client: TestClient, auth_headers: dict[str, str]) -> N
     assert "scripts.yaml" in files
 
 
-async def test_list_files_excludes_secrets(
-    client: TestClient, auth_headers: dict[str, str], config_dir: Path
-) -> None:
+async def test_list_files_excludes_secrets(client: TestClient, auth_headers: dict[str, str], config_dir: Path) -> None:
     """secrets.yaml should never appear in the file list."""
     # Create a secrets.yaml in the config dir
     (config_dir / "secrets.yaml").write_text("wifi_password: hunter2\n")

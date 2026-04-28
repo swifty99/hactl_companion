@@ -1,0 +1,64 @@
+"""Tests for !include resolution (Phase 2)."""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+from aiohttp.test_utils import TestClient
+
+
+async def test_resolve_includes(client: TestClient, auth_headers: dict[str, str]) -> None:
+    """Reading configuration.yaml with resolve=true should inline !include content."""
+    resp = await client.get("/v1/config/file?path=configuration.yaml&resolve=true", headers=auth_headers)
+    assert resp.status == 200
+    data = await resp.json()
+    content = data["content"]
+    # The automation !include should be resolved — we should see automation content
+    assert "door_light" in content or "automation" in content
+
+
+async def test_resolve_false_returns_raw(client: TestClient, auth_headers: dict[str, str]) -> None:
+    """resolve=false should return raw content with !include tags."""
+    resp = await client.get("/v1/config/file?path=configuration.yaml&resolve=false", headers=auth_headers)
+    assert resp.status == 200
+    data = await resp.json()
+    content = data["content"]
+    assert "!include" in content
+
+
+async def test_resolve_default_is_true(client: TestClient, auth_headers: dict[str, str]) -> None:
+    """Default resolve should be true (includes resolved)."""
+    resp = await client.get("/v1/config/file?path=configuration.yaml", headers=auth_headers)
+    assert resp.status == 200
+    data = await resp.json()
+    content = data["content"]
+    # Should NOT contain raw !include tags
+    assert "!include" not in content
+
+
+async def test_include_dir_named(client: TestClient, auth_headers: dict[str, str]) -> None:
+    """!include_dir_named packages should resolve to dict with file stems as keys."""
+    resp = await client.get("/v1/config/file?path=configuration.yaml&resolve=true", headers=auth_headers)
+    assert resp.status == 200
+    data = await resp.json()
+    content = data["content"]
+    # packages dir has energy.yaml and security.yaml
+    assert "energy" in content
+    assert "security" in content
+
+
+async def test_resolve_nonexistent_include(client: TestClient, auth_headers: dict[str, str], config_dir: Path) -> None:
+    """If an !include target doesn't exist, it should return an error."""
+    (config_dir / "broken.yaml").write_text("data: !include nonexistent.yaml\n")
+    resp = await client.get("/v1/config/file?path=broken.yaml&resolve=true", headers=auth_headers)
+    assert resp.status == 404
+
+
+async def test_resolve_secrets_include_denied(
+    client: TestClient, auth_headers: dict[str, str], config_dir: Path
+) -> None:
+    """!include secrets.yaml should be denied."""
+    (config_dir / "sneaky.yaml").write_text("passwords: !include secrets.yaml\n")
+    (config_dir / "secrets.yaml").write_text("wifi_password: hunter2\n")
+    resp = await client.get("/v1/config/file?path=sneaky.yaml&resolve=true", headers=auth_headers)
+    assert resp.status == 403

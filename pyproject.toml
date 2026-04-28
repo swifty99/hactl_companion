@@ -1,7 +1,7 @@
 [project]
 name = "hactl-companion"
-version = "0.1.0"
-requires-python = ">=3.11"
+version = "0.2.0"
+requires-python = ">=3.12"
 dependencies = [
     "aiohttp>=3.9",
     "ruamel.yaml>=0.18",
@@ -30,14 +30,14 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 
 [tool.ruff]
-target-version = "py311"
+target-version = "py312"
 line-length = 120
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP", "B", "SIM", "RUF"]
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.12"
 strict = true
 packages = ["companion"]
 mypy_path = "src"

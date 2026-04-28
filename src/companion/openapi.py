@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from companion import __version__
 
-# Manually maintained response schemas for each endpoint group
+# Response schemas for each endpoint group
 _HEALTH_SCHEMA = {"type": "object", "properties": {"status": {"type": "string"}, "version": {"type": "string"}}}
 
 _CONFIG_FILES_SCHEMA = {
@@ -23,55 +23,106 @@ _CONFIG_WRITE_DRY_SCHEMA = {
     "type": "object",
     "properties": {"status": {"type": "string"}, "diff": {"type": "string"}},
 }
-_CONFIG_WRITE_APPLY_SCHEMA = {
-    "type": "object",
-    "properties": {"status": {"type": "string"}, "backup": {"type": "string"}},
-}
 
-_SUPERVISOR_INFO_SCHEMA = {"type": "object", "additionalProperties": True}
-_ADDONS_SCHEMA = {"type": "object", "properties": {"addons": {"type": "array", "items": {"type": "object"}}}}
-_BACKUPS_SCHEMA = {"type": "object", "properties": {"backups": {"type": "array", "items": {"type": "object"}}}}
-_BACKUP_CREATED_SCHEMA = {
-    "type": "object",
-    "properties": {"status": {"type": "string"}, "data": {"type": "object"}},
-}
-
-_LOG_SCHEMA = {
+_TEMPLATE_LIST_SCHEMA = {
     "type": "object",
     "properties": {
-        "source": {"type": "string"},
-        "lines": {"type": "array", "items": {"type": "string"}},
-        "count": {"type": "integer"},
+        "templates": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "unique_id": {"type": "string"},
+                    "name": {"type": "string"},
+                    "domain": {"type": "string"},
+                    "state": {"type": "string"},
+                    "unit_of_measurement": {"type": "string"},
+                    "device_class": {"type": "string"},
+                },
+            },
+        }
     },
 }
-
-_HA_CLI_SCHEMA = {
+_TEMPLATE_SCHEMA = {
+    "type": "object",
+    "properties": {"unique_id": {"type": "string"}, "content": {"type": "string"}},
+}
+_SCRIPT_LIST_SCHEMA = {
     "type": "object",
     "properties": {
-        "action": {"type": "string"},
-        "exit_code": {"type": "integer"},
-        "stdout": {"type": "string"},
-        "stderr": {"type": "string"},
+        "scripts": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "id": {"type": "string"},
+                    "alias": {"type": "string"},
+                    "mode": {"type": "string"},
+                    "fields": {"type": "array", "items": {"type": "object"}},
+                },
+            },
+        }
     },
 }
-
+_SCRIPT_SCHEMA = {
+    "type": "object",
+    "properties": {"id": {"type": "string"}, "content": {"type": "string"}},
+}
+_AUTOMATION_LIST_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "automations": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "id": {"type": "string"},
+                    "alias": {"type": "string"},
+                    "mode": {"type": "string"},
+                    "description": {"type": "string"},
+                },
+            },
+        }
+    },
+}
+_AUTOMATION_SCHEMA = {
+    "type": "object",
+    "properties": {"id": {"type": "string"}, "content": {"type": "string"}},
+}
+_STATUS_SCHEMA = {
+    "type": "object",
+    "properties": {"status": {"type": "string"}},
+}
+_CREATED_SCHEMA = {
+    "type": "object",
+    "properties": {"status": {"type": "string"}, "id": {"type": "string"}},
+}
+_CREATED_UID_SCHEMA = {
+    "type": "object",
+    "properties": {"status": {"type": "string"}, "unique_id": {"type": "string"}},
+}
 
 # Map of (method, path) -> endpoint metadata
 ENDPOINT_META: dict[tuple[str, str], dict[str, object]] = {
+    # Health
     ("GET", "/v1/health"): {
         "summary": "Liveness check",
         "tags": ["health"],
         "response_schema": _HEALTH_SCHEMA,
     },
+    # Config files
     ("GET", "/v1/config/files"): {
         "summary": "List YAML config files",
         "tags": ["config"],
         "response_schema": _CONFIG_FILES_SCHEMA,
     },
     ("GET", "/v1/config/file"): {
-        "summary": "Read a config file",
+        "summary": "Read a config file (with optional !include resolution)",
         "tags": ["config"],
-        "parameters": [{"name": "path", "in": "query", "required": True, "schema": {"type": "string"}}],
+        "parameters": [
+            {"name": "path", "in": "query", "required": True, "schema": {"type": "string"}},
+            {"name": "resolve", "in": "query", "required": False, "schema": {"type": "string", "default": "true"}},
+        ],
         "response_schema": _CONFIG_FILE_SCHEMA,
     },
     ("GET", "/v1/config/block"): {
@@ -96,78 +147,131 @@ ENDPOINT_META: dict[tuple[str, str], dict[str, object]] = {
         },
         "response_schema": _CONFIG_WRITE_DRY_SCHEMA,
     },
-    ("GET", "/v1/supervisor/info"): {
-        "summary": "System info via Supervisor",
-        "tags": ["supervisor"],
-        "response_schema": _SUPERVISOR_INFO_SCHEMA,
+    # Templates
+    ("GET", "/v1/config/templates"): {
+        "summary": "List all template sensor definitions",
+        "tags": ["templates"],
+        "response_schema": _TEMPLATE_LIST_SCHEMA,
     },
-    ("GET", "/v1/supervisor/addons"): {
-        "summary": "Installed add-ons",
-        "tags": ["supervisor"],
-        "response_schema": _ADDONS_SCHEMA,
+    ("GET", "/v1/config/template"): {
+        "summary": "Get single template definition",
+        "tags": ["templates"],
+        "parameters": [{"name": "id", "in": "query", "required": True, "schema": {"type": "string"}}],
+        "response_schema": _TEMPLATE_SCHEMA,
     },
-    ("GET", "/v1/supervisor/backups"): {
-        "summary": "Backup list",
-        "tags": ["supervisor"],
-        "response_schema": _BACKUPS_SCHEMA,
-    },
-    ("POST", "/v1/supervisor/backups/new"): {
-        "summary": "Create a new backup",
-        "tags": ["supervisor"],
-        "response_schema": _BACKUP_CREATED_SCHEMA,
-    },
-    ("GET", "/v1/supervisor/addon/{slug}/logs"): {
-        "summary": "Add-on logs",
-        "tags": ["supervisor"],
-        "parameters": [{"name": "slug", "in": "path", "required": True, "schema": {"type": "string"}}],
-        "response_schema": {"type": "string"},
-    },
-    ("GET", "/v1/logs/core"): {
-        "summary": "HA Core logs",
-        "tags": ["logs"],
+    ("PUT", "/v1/config/template"): {
+        "summary": "Update template definition",
+        "tags": ["templates"],
         "parameters": [
-            {"name": "lines", "in": "query", "required": False, "schema": {"type": "integer", "default": 100}},
-            {"name": "level", "in": "query", "required": False, "schema": {"type": "string"}},
+            {"name": "id", "in": "query", "required": True, "schema": {"type": "string"}},
+            {"name": "dry_run", "in": "query", "required": False, "schema": {"type": "string", "default": "true"}},
         ],
-        "response_schema": _LOG_SCHEMA,
+        "requestBody": {
+            "content": {"text/plain": {"schema": {"type": "string"}}},
+            "required": True,
+        },
+        "response_schema": _STATUS_SCHEMA,
     },
-    ("GET", "/v1/logs/supervisor"): {
-        "summary": "Supervisor logs",
-        "tags": ["logs"],
+    ("POST", "/v1/config/template"): {
+        "summary": "Create new template sensor",
+        "tags": ["templates"],
         "parameters": [
-            {"name": "lines", "in": "query", "required": False, "schema": {"type": "integer", "default": 100}},
+            {"name": "domain", "in": "query", "required": False, "schema": {"type": "string", "default": "sensor"}},
         ],
-        "response_schema": _LOG_SCHEMA,
+        "requestBody": {
+            "content": {"text/plain": {"schema": {"type": "string"}}},
+            "required": True,
+        },
+        "response_schema": _CREATED_UID_SCHEMA,
+        "response_status": 201,
     },
-    ("GET", "/v1/logs/addon/{slug}"): {
-        "summary": "Add-on logs",
-        "tags": ["logs"],
+    ("DELETE", "/v1/config/template"): {
+        "summary": "Delete template sensor",
+        "tags": ["templates"],
+        "parameters": [{"name": "id", "in": "query", "required": True, "schema": {"type": "string"}}],
+        "response_schema": _STATUS_SCHEMA,
+    },
+    # Scripts
+    ("GET", "/v1/config/scripts"): {
+        "summary": "List all script definitions",
+        "tags": ["scripts"],
+        "response_schema": _SCRIPT_LIST_SCHEMA,
+    },
+    ("GET", "/v1/config/script"): {
+        "summary": "Get single script definition",
+        "tags": ["scripts"],
+        "parameters": [{"name": "id", "in": "query", "required": True, "schema": {"type": "string"}}],
+        "response_schema": _SCRIPT_SCHEMA,
+    },
+    ("PUT", "/v1/config/script"): {
+        "summary": "Update script definition",
+        "tags": ["scripts"],
         "parameters": [
-            {"name": "slug", "in": "path", "required": True, "schema": {"type": "string"}},
-            {"name": "lines", "in": "query", "required": False, "schema": {"type": "integer", "default": 100}},
+            {"name": "id", "in": "query", "required": True, "schema": {"type": "string"}},
+            {"name": "dry_run", "in": "query", "required": False, "schema": {"type": "string", "default": "true"}},
         ],
-        "response_schema": _LOG_SCHEMA,
+        "requestBody": {
+            "content": {"text/plain": {"schema": {"type": "string"}}},
+            "required": True,
+        },
+        "response_schema": _STATUS_SCHEMA,
     },
-    ("POST", "/v1/ha/reload/{domain}"): {
-        "summary": "Reload a domain",
-        "tags": ["ha-cli"],
-        "parameters": [{"name": "domain", "in": "path", "required": True, "schema": {"type": "string"}}],
-        "response_schema": _HA_CLI_SCHEMA,
+    ("POST", "/v1/config/script"): {
+        "summary": "Create new script",
+        "tags": ["scripts"],
+        "requestBody": {
+            "content": {"text/plain": {"schema": {"type": "string"}}},
+            "required": True,
+        },
+        "response_schema": _CREATED_SCHEMA,
+        "response_status": 201,
     },
-    ("POST", "/v1/ha/restart"): {
-        "summary": "Restart HA Core",
-        "tags": ["ha-cli"],
-        "response_schema": _HA_CLI_SCHEMA,
+    ("DELETE", "/v1/config/script"): {
+        "summary": "Delete script",
+        "tags": ["scripts"],
+        "parameters": [{"name": "id", "in": "query", "required": True, "schema": {"type": "string"}}],
+        "response_schema": _STATUS_SCHEMA,
     },
-    ("GET", "/v1/ha/resolution"): {
-        "summary": "Resolution center info",
-        "tags": ["ha-cli"],
-        "response_schema": _HA_CLI_SCHEMA,
+    # Automations
+    ("GET", "/v1/config/automations"): {
+        "summary": "List all automation definitions",
+        "tags": ["automations"],
+        "response_schema": _AUTOMATION_LIST_SCHEMA,
     },
-    ("POST", "/v1/ha/check-config"): {
-        "summary": "Validate HA configuration",
-        "tags": ["ha-cli"],
-        "response_schema": _HA_CLI_SCHEMA,
+    ("GET", "/v1/config/automation"): {
+        "summary": "Get single automation definition",
+        "tags": ["automations"],
+        "parameters": [{"name": "id", "in": "query", "required": True, "schema": {"type": "string"}}],
+        "response_schema": _AUTOMATION_SCHEMA,
+    },
+    ("PUT", "/v1/config/automation"): {
+        "summary": "Update automation definition",
+        "tags": ["automations"],
+        "parameters": [
+            {"name": "id", "in": "query", "required": True, "schema": {"type": "string"}},
+            {"name": "dry_run", "in": "query", "required": False, "schema": {"type": "string", "default": "true"}},
+        ],
+        "requestBody": {
+            "content": {"text/plain": {"schema": {"type": "string"}}},
+            "required": True,
+        },
+        "response_schema": _STATUS_SCHEMA,
+    },
+    ("POST", "/v1/config/automation"): {
+        "summary": "Create new automation",
+        "tags": ["automations"],
+        "requestBody": {
+            "content": {"text/plain": {"schema": {"type": "string"}}},
+            "required": True,
+        },
+        "response_schema": _CREATED_SCHEMA,
+        "response_status": 201,
+    },
+    ("DELETE", "/v1/config/automation"): {
+        "summary": "Delete automation",
+        "tags": ["automations"],
+        "parameters": [{"name": "id", "in": "query", "required": True, "schema": {"type": "string"}}],
+        "response_schema": _STATUS_SCHEMA,
     },
 }
 
@@ -177,16 +281,16 @@ def generate_spec() -> dict[str, object]:
     paths: dict[str, dict[str, object]] = {}
 
     for (method, path), meta in ENDPOINT_META.items():
-        # Convert aiohttp path format {param} to OpenAPI {param} (same format)
         openapi_path = path
         if openapi_path not in paths:
             paths[openapi_path] = {}
 
+        status = str(meta.get("response_status", 200))
         operation: dict[str, object] = {
             "summary": meta.get("summary", ""),
             "tags": meta.get("tags", []),
             "responses": {
-                "200": {
+                status: {
                     "description": "Successful response",
                     "content": {"application/json": {"schema": meta.get("response_schema", {})}},
                 },
@@ -205,7 +309,11 @@ def generate_spec() -> dict[str, object]:
         "info": {
             "title": "hactl-companion API",
             "version": __version__,
-            "description": "HA Add-on exposing internal HA features for hactl CLI",
+            "description": (
+                "YAML file access API for Home Assistant. "
+                "Provides structured CRUD for templates, scripts, and automations, "
+                "plus raw config file read/write with !include resolution."
+            ),
         },
         "servers": [{"url": "/", "description": "HA Ingress"}],
         "paths": paths,

@@ -26,9 +26,7 @@ class TestSupervisorProxy502:
         assert r.status_code == 502
 
     def test_supervisor_addon_logs(self, companion_url: str, auth_headers: dict[str, str]) -> None:
-        r = requests.get(
-            f"{companion_url}/v1/supervisor/addon/some_addon/logs", headers=auth_headers, timeout=10
-        )
+        r = requests.get(f"{companion_url}/v1/supervisor/addon/some_addon/logs", headers=auth_headers, timeout=10)
         assert r.status_code == 502
 
 
@@ -40,9 +38,7 @@ class TestLogsSupervisor502:
         assert r.status_code == 502
 
     def test_addon_logs(self, companion_url: str, auth_headers: dict[str, str]) -> None:
-        r = requests.get(
-            f"{companion_url}/v1/logs/addon/mosquitto", headers=auth_headers, timeout=10
-        )
+        r = requests.get(f"{companion_url}/v1/logs/addon/mosquitto", headers=auth_headers, timeout=10)
         assert r.status_code == 502
 
 

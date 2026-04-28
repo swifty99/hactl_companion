@@ -10,3 +10,29 @@ welcome_home:
       data:
         media_content_id: welcome_tune
         media_content_type: music
+
+kino_start:
+  alias: Kino Start
+  mode: single
+  fields:
+    brightness:
+      description: "Target brightness"
+      required: false
+      selector:
+        number:
+          min: 0
+          max: 255
+  sequence:
+    - service: light.turn_on
+      target:
+        entity_id: light.wohnzimmer
+      data:
+        brightness: "{{ brightness }}"
+
+goodnight:
+  alias: Goodnight
+  mode: single
+  sequence:
+    - service: light.turn_off
+      target:
+        entity_id: all

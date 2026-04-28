@@ -14,7 +14,7 @@ async def test_health_includes_version(client: TestClient) -> None:
     resp = await client.get("/v1/health")
     data = await resp.json()
     assert "version" in data
-    assert data["version"] == "0.1.0"
+    assert data["version"] == "0.2.0"
 
 
 async def test_health_no_auth_required(client: TestClient) -> None:

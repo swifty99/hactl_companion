@@ -1,4 +1,4 @@
-"""Tests for OpenAPI spec generation and conformance (Phase 7)."""
+"""Tests for OpenAPI spec generation and conformance."""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ def test_spec_is_valid_openapi() -> None:
 
 def test_spec_has_correct_version() -> None:
     spec = generate_spec()
-    assert spec["info"]["version"] == "0.1.0"  # type: ignore[index]
+    assert spec["info"]["version"] == "0.2.0"  # type: ignore[index]
 
 
 def test_all_routes_have_spec_entry() -> None:
@@ -65,10 +65,15 @@ def test_write_spec_to_file(tmp_path: Path) -> None:
     assert "openapi: 3.0.3" in content or "openapi:" in content
 
 
+def test_spec_has_20_endpoints() -> None:
+    """Spec should have exactly 20 endpoint operations (v2 API surface)."""
+    assert len(ENDPOINT_META) == 20
+
+
 def test_spec_paths_count() -> None:
-    """Spec should have entries for all endpoint groups."""
+    """Spec should cover all path groups."""
     spec = generate_spec()
     paths = spec["paths"]
     assert isinstance(paths, dict)
-    # We have: health, config (3 paths), supervisor (4 paths), logs (3 paths), ha-cli (4 paths)
-    assert len(paths) >= 10
+    # health(1) + config(3) + templates(2) + scripts(2) + automations(2) = 10 paths
+    assert len(paths) == 10

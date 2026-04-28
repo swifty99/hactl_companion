@@ -137,12 +137,14 @@ def _onboard_ha(base_url: str) -> str:
         assert auth_resp["type"] == "auth_ok", f"WS auth failed: {auth_resp}"
 
         ws.send(
-            json.dumps({
-                "id": 1,
-                "type": "auth/long_lived_access_token",
-                "client_name": "companion-e2e",
-                "lifespan": 365,
-            })
+            json.dumps(
+                {
+                    "id": 1,
+                    "type": "auth/long_lived_access_token",
+                    "client_name": "companion-e2e",
+                    "lifespan": 365,
+                }
+            )
         )
         token_resp = json.loads(ws.recv())
         assert token_resp.get("success"), f"WS token creation failed: {token_resp}"

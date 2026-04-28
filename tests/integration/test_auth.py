@@ -20,9 +20,7 @@ class TestAuthEnforcement:
         )
         assert r.status_code == 401
 
-    def test_valid_token_returns_200(
-        self, companion_url: str, auth_headers: dict[str, str], _ha_ready: None
-    ) -> None:
+    def test_valid_token_returns_200(self, companion_url: str, auth_headers: dict[str, str], _ha_ready: None) -> None:
         r = requests.get(f"{companion_url}/v1/config/files", headers=auth_headers, timeout=10)
         assert r.status_code == 200
 

@@ -21,9 +21,7 @@ class TestHealth:
 class TestConfigRead:
     """Tests that read /config — requires HA to have written its initial files."""
 
-    def test_list_files(
-        self, companion_url: str, auth_headers: dict[str, str], _ha_ready: None
-    ) -> None:
+    def test_list_files(self, companion_url: str, auth_headers: dict[str, str], _ha_ready: None) -> None:
         r = requests.get(f"{companion_url}/v1/config/files", headers=auth_headers, timeout=10)
         assert r.status_code == 200
         files = r.json()["files"]
@@ -39,9 +37,7 @@ class TestConfigRead:
         files = r.json()["files"]
         assert "secrets.yaml" not in files
 
-    def test_read_configuration_yaml(
-        self, companion_url: str, auth_headers: dict[str, str], _ha_ready: None
-    ) -> None:
+    def test_read_configuration_yaml(self, companion_url: str, auth_headers: dict[str, str], _ha_ready: None) -> None:
         r = requests.get(
             f"{companion_url}/v1/config/file",
             params={"path": "configuration.yaml"},
@@ -53,9 +49,7 @@ class TestConfigRead:
         assert data["path"] == "configuration.yaml"
         assert len(data["content"]) > 0
 
-    def test_read_nonexistent_file(
-        self, companion_url: str, auth_headers: dict[str, str], _ha_ready: None
-    ) -> None:
+    def test_read_nonexistent_file(self, companion_url: str, auth_headers: dict[str, str], _ha_ready: None) -> None:
         r = requests.get(
             f"{companion_url}/v1/config/file",
             params={"path": "does_not_exist.yaml"},
@@ -64,9 +58,7 @@ class TestConfigRead:
         )
         assert r.status_code == 404
 
-    def test_path_traversal_rejected(
-        self, companion_url: str, auth_headers: dict[str, str], _ha_ready: None
-    ) -> None:
+    def test_path_traversal_rejected(self, companion_url: str, auth_headers: dict[str, str], _ha_ready: None) -> None:
         r = requests.get(
             f"{companion_url}/v1/config/file",
             params={"path": "../etc/passwd"},
@@ -75,9 +67,7 @@ class TestConfigRead:
         )
         assert r.status_code == 400
 
-    def test_secrets_yaml_denied(
-        self, companion_url: str, auth_headers: dict[str, str], _ha_ready: None
-    ) -> None:
+    def test_secrets_yaml_denied(self, companion_url: str, auth_headers: dict[str, str], _ha_ready: None) -> None:
         r = requests.get(
             f"{companion_url}/v1/config/file",
             params={"path": "secrets.yaml"},
@@ -91,9 +81,7 @@ class TestConfigRead:
 class TestConfigWrite:
     """Tests that write to /config via the companion."""
 
-    def test_dry_run_no_changes(
-        self, companion_url: str, auth_headers: dict[str, str], _ha_ready: None
-    ) -> None:
+    def test_dry_run_no_changes(self, companion_url: str, auth_headers: dict[str, str], _ha_ready: None) -> None:
         # Read current content
         r = requests.get(
             f"{companion_url}/v1/config/file",
@@ -114,9 +102,7 @@ class TestConfigWrite:
         assert r.status_code == 200
         assert r.json()["status"] == "dry_run"
 
-    def test_write_new_file(
-        self, companion_url: str, auth_headers: dict[str, str], _ha_ready: None
-    ) -> None:
+    def test_write_new_file(self, companion_url: str, auth_headers: dict[str, str], _ha_ready: None) -> None:
         yaml_content = "integration_test:\n  key: value\n"
 
         r = requests.put(
@@ -169,9 +155,7 @@ class TestConfigWrite:
 class TestCoreLogs:
     """Tests that read HA Core's log file from /config/home-assistant.log."""
 
-    def test_core_log_readable(
-        self, companion_url: str, auth_headers: dict[str, str], _ha_ready: None
-    ) -> None:
+    def test_core_log_readable(self, companion_url: str, auth_headers: dict[str, str], _ha_ready: None) -> None:
         r = requests.get(
             f"{companion_url}/v1/logs/core",
             params={"lines": "50"},
@@ -184,9 +168,7 @@ class TestCoreLogs:
         assert data["count"] > 0
         assert isinstance(data["lines"], list)
 
-    def test_core_log_filter_errors(
-        self, companion_url: str, auth_headers: dict[str, str], _ha_ready: None
-    ) -> None:
+    def test_core_log_filter_errors(self, companion_url: str, auth_headers: dict[str, str], _ha_ready: None) -> None:
         r = requests.get(
             f"{companion_url}/v1/logs/core",
             params={"lines": "200", "level": "error"},

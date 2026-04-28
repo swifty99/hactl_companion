@@ -12,6 +12,8 @@ from pathlib import Path
 from aiohttp import web
 from ruamel.yaml import YAML
 
+from companion.yaml_resolver import YamlResolver
+
 # Files that must never be exposed
 DENIED_FILES: set[str] = {"secrets.yaml"}
 
@@ -65,15 +67,27 @@ async def get_config_files(request: web.Request) -> web.Response:
 
 
 async def get_config_file(request: web.Request) -> web.Response:
-    """GET /v1/config/file?path=... — read a whole YAML file."""
+    """GET /v1/config/file?path=...&resolve=true|false — read a whole YAML file."""
     base = request.app["config_base_path"]
     rel_path = request.query.get("path", "")
+    resolve = request.query.get("resolve", "true").lower() != "false"
     target = _resolve_config_path(base, rel_path)
 
     if not target.is_file():
         raise web.HTTPNotFound(text=f"File not found: {rel_path}")
 
-    content = target.read_text(encoding="utf-8")
+    if resolve:
+        resolver = YamlResolver(base)
+        try:
+            data = resolver.load(rel_path, resolve=True)
+            content = resolver.dump_to_string(data)
+        except (PermissionError, ValueError) as exc:
+            raise web.HTTPForbidden(text=str(exc)) from exc
+        except FileNotFoundError as exc:
+            raise web.HTTPNotFound(text=str(exc)) from exc
+    else:
+        content = target.read_text(encoding="utf-8")
+
     return web.json_response({"path": rel_path, "content": content})
 
 
@@ -173,14 +187,14 @@ async def put_config_file(request: web.Request) -> web.Response:
         # Restore backup on validation failure
         if backup_path.is_file():
             shutil.copy2(backup_path, target)
-        raise web.HTTPBadRequest(
-            text=f"Config validation failed: {validation_result['error']}. Backup restored."
-        )
+        raise web.HTTPBadRequest(text=f"Config validation failed: {validation_result['error']}. Backup restored.")
 
-    return web.json_response({
-        "status": "applied",
-        "backup": backup_name,
-    })
+    return web.json_response(
+        {
+            "status": "applied",
+            "backup": backup_name,
+        }
+    )
 
 
 async def _validate_config() -> dict[str, object] | None:
@@ -189,7 +203,9 @@ async def _validate_config() -> dict[str, object] | None:
 
     try:
         proc = await asyncio.create_subprocess_exec(
-            "ha", "core", "check-config",
+            "ha",
+            "core",
+            "check-config",
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )

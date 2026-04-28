@@ -18,10 +18,12 @@ TEST_TOKEN = "test-supervisor-token-12345"
 @pytest.fixture
 def config_dir(tmp_path: Path) -> Path:
     """Create a temporary config directory populated with test fixtures."""
-    # Copy only YAML fixture files to the temp dir (not logs etc.)
+    # Copy YAML fixture files to the temp dir
     for src_file in FIXTURES_DIR.iterdir():
         if src_file.is_file() and src_file.suffix in (".yaml", ".yml"):
             shutil.copy2(src_file, tmp_path / src_file.name)
+        elif src_file.is_dir():
+            shutil.copytree(src_file, tmp_path / src_file.name)
     return tmp_path
 
 

@@ -1,23 +1,27 @@
 COMPOSE_FILE := docker-compose.integration.yaml
-VENV := .venv/Scripts
 
-.PHONY: test test-int lint fmt clean
+.PHONY: test test-int lint fmt clean spec
 
 test:
-	$(VENV)/pytest tests/ --ignore=tests/integration -v --tb=short
+	uv run pytest tests/ --ignore=tests/integration -v --tb=short
 
 test-int:
 	docker compose -f $(COMPOSE_FILE) up -d --build
-	$(VENV)/pytest tests/integration -v --tb=short -x; \
+	uv run pytest tests/integration -v --tb=short -x; \
 	status=$$?; \
 	docker compose -f $(COMPOSE_FILE) down -v; \
 	exit $$status
 
 lint:
-	$(VENV)/ruff check src/ tests/
+	uv run ruff check src/ tests/
+	uv run ruff format --check src/ tests/
+	uv run mypy
 
 fmt:
-	$(VENV)/ruff format src/ tests/
+	uv run ruff format src/ tests/
+
+spec:
+	uv run python -c "from companion.openapi import write_spec; write_spec()"
 
 clean:
 	docker compose -f $(COMPOSE_FILE) down -v 2>nul || true

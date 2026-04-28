@@ -1,9 +1,9 @@
-ARG BASE_IMAGE=ghcr.io/home-assistant/amd64-base:latest
+ARG BASE_IMAGE=python:3.12-alpine
 FROM ${BASE_IMAGE}
-RUN command -v python3 > /dev/null 2>&1 || apk add --no-cache python3 py3-pip
+RUN apk add --no-cache bash
 COPY pyproject.toml /app/
 COPY src/ /app/src/
-RUN pip3 install --no-cache-dir --break-system-packages /app
+RUN pip install --no-cache-dir --break-system-packages /app
 COPY run.sh /
 RUN chmod a+x /run.sh
 CMD ["/run.sh"]

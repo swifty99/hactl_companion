@@ -1,8 +1,10 @@
 openapi: 3.0.3
 info:
   title: hactl-companion API
-  version: 0.1.0
-  description: HA Add-on exposing internal HA features for hactl CLI
+  version: 0.2.0
+  description: YAML file access API for Home Assistant. Provides structured CRUD
+    for templates, scripts, and automations, plus raw config file read/write 
+    with !include resolution.
 servers:
 - url: /
   description: HA Ingress
@@ -43,7 +45,7 @@ paths:
                       type: string
   /v1/config/file:
     get:
-      summary: Read a config file
+      summary: Read a config file (with optional !include resolution)
       tags:
       - config
       responses:
@@ -64,6 +66,12 @@ paths:
         required: true
         schema:
           type: string
+      - name: resolve
+        in: query
+        required: false
+        schema:
+          type: string
+          default: 'true'
     put:
       summary: Write a config file (dry-run or apply)
       tags:
@@ -128,24 +136,11 @@ paths:
         required: true
         schema:
           type: string
-  /v1/supervisor/info:
+  /v1/config/templates:
     get:
-      summary: System info via Supervisor
+      summary: List all template sensor definitions
       tags:
-      - supervisor
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                type: object
-                additionalProperties: true
-  /v1/supervisor/addons:
-    get:
-      summary: Installed add-ons
-      tags:
-      - supervisor
+      - templates
       responses:
         '200':
           description: Successful response
@@ -154,15 +149,28 @@ paths:
               schema:
                 type: object
                 properties:
-                  addons:
+                  templates:
                     type: array
                     items:
                       type: object
-  /v1/supervisor/backups:
+                      properties:
+                        unique_id:
+                          type: string
+                        name:
+                          type: string
+                        domain:
+                          type: string
+                        state:
+                          type: string
+                        unit_of_measurement:
+                          type: string
+                        device_class:
+                          type: string
+  /v1/config/template:
     get:
-      summary: Backup list
+      summary: Get single template definition
       tags:
-      - supervisor
+      - templates
       responses:
         '200':
           description: Successful response
@@ -171,50 +179,20 @@ paths:
               schema:
                 type: object
                 properties:
-                  backups:
-                    type: array
-                    items:
-                      type: object
-  /v1/supervisor/backups/new:
-    post:
-      summary: Create a new backup
-      tags:
-      - supervisor
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
+                  unique_id:
                     type: string
-                  data:
-                    type: object
-  /v1/supervisor/addon/{slug}/logs:
-    get:
-      summary: Add-on logs
-      tags:
-      - supervisor
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                type: string
+                  content:
+                    type: string
       parameters:
-      - name: slug
-        in: path
+      - name: id
+        in: query
         required: true
         schema:
           type: string
-  /v1/logs/core:
-    get:
-      summary: HA Core logs
+    put:
+      summary: Update template definition
       tags:
-      - logs
+      - templates
       responses:
         '200':
           description: Successful response
@@ -223,127 +201,297 @@ paths:
               schema: &id001
                 type: object
                 properties:
-                  source:
+                  status:
                     type: string
-                  lines:
-                    type: array
-                    items:
-                      type: string
-                  count:
-                    type: integer
       parameters:
-      - name: lines
+      - name: id
         in: query
-        required: false
-        schema:
-          type: integer
-          default: 100
-      - name: level
-        in: query
-        required: false
-        schema:
-          type: string
-  /v1/logs/supervisor:
-    get:
-      summary: Supervisor logs
-      tags:
-      - logs
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema: *id001
-      parameters:
-      - name: lines
-        in: query
-        required: false
-        schema:
-          type: integer
-          default: 100
-  /v1/logs/addon/{slug}:
-    get:
-      summary: Add-on logs
-      tags:
-      - logs
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema: *id001
-      parameters:
-      - name: slug
-        in: path
         required: true
         schema:
           type: string
-      - name: lines
+      - name: dry_run
         in: query
         required: false
         schema:
-          type: integer
-          default: 100
-  /v1/ha/reload/{domain}:
+          type: string
+          default: 'true'
+      requestBody:
+        content:
+          text/plain:
+            schema:
+              type: string
+        required: true
     post:
-      summary: Reload a domain
+      summary: Create new template sensor
       tags:
-      - ha-cli
+      - templates
+      responses:
+        '201':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  unique_id:
+                    type: string
+      parameters:
+      - name: domain
+        in: query
+        required: false
+        schema:
+          type: string
+          default: sensor
+      requestBody:
+        content:
+          text/plain:
+            schema:
+              type: string
+        required: true
+    delete:
+      summary: Delete template sensor
+      tags:
+      - templates
       responses:
         '200':
+          description: Successful response
+          content:
+            application/json:
+              schema: *id001
+      parameters:
+      - name: id
+        in: query
+        required: true
+        schema:
+          type: string
+  /v1/config/scripts:
+    get:
+      summary: List all script definitions
+      tags:
+      - scripts
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  scripts:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        alias:
+                          type: string
+                        mode:
+                          type: string
+                        fields:
+                          type: array
+                          items:
+                            type: object
+  /v1/config/script:
+    get:
+      summary: Get single script definition
+      tags:
+      - scripts
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  content:
+                    type: string
+      parameters:
+      - name: id
+        in: query
+        required: true
+        schema:
+          type: string
+    put:
+      summary: Update script definition
+      tags:
+      - scripts
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema: *id001
+      parameters:
+      - name: id
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: dry_run
+        in: query
+        required: false
+        schema:
+          type: string
+          default: 'true'
+      requestBody:
+        content:
+          text/plain:
+            schema:
+              type: string
+        required: true
+    post:
+      summary: Create new script
+      tags:
+      - scripts
+      responses:
+        '201':
           description: Successful response
           content:
             application/json:
               schema: &id002
                 type: object
                 properties:
-                  action:
+                  status:
                     type: string
-                  exit_code:
-                    type: integer
-                  stdout:
+                  id:
                     type: string
-                  stderr:
-                    type: string
+      requestBody:
+        content:
+          text/plain:
+            schema:
+              type: string
+        required: true
+    delete:
+      summary: Delete script
+      tags:
+      - scripts
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema: *id001
       parameters:
-      - name: domain
-        in: path
+      - name: id
+        in: query
         required: true
         schema:
           type: string
-  /v1/ha/restart:
-    post:
-      summary: Restart HA Core
-      tags:
-      - ha-cli
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema: *id002
-  /v1/ha/resolution:
+  /v1/config/automations:
     get:
-      summary: Resolution center info
+      summary: List all automation definitions
       tags:
-      - ha-cli
+      - automations
       responses:
         '200':
           description: Successful response
           content:
             application/json:
-              schema: *id002
-  /v1/ha/check-config:
+              schema:
+                type: object
+                properties:
+                  automations:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        alias:
+                          type: string
+                        mode:
+                          type: string
+                        description:
+                          type: string
+  /v1/config/automation:
+    get:
+      summary: Get single automation definition
+      tags:
+      - automations
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  content:
+                    type: string
+      parameters:
+      - name: id
+        in: query
+        required: true
+        schema:
+          type: string
+    put:
+      summary: Update automation definition
+      tags:
+      - automations
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema: *id001
+      parameters:
+      - name: id
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: dry_run
+        in: query
+        required: false
+        schema:
+          type: string
+          default: 'true'
+      requestBody:
+        content:
+          text/plain:
+            schema:
+              type: string
+        required: true
     post:
-      summary: Validate HA configuration
+      summary: Create new automation
       tags:
-      - ha-cli
+      - automations
+      responses:
+        '201':
+          description: Successful response
+          content:
+            application/json:
+              schema: *id002
+      requestBody:
+        content:
+          text/plain:
+            schema:
+              type: string
+        required: true
+    delete:
+      summary: Delete automation
+      tags:
+      - automations
       responses:
         '200':
           description: Successful response
           content:
             application/json:
-              schema: *id002
+              schema: *id001
+      parameters:
+      - name: id
+        in: query
+        required: true
+        schema:
+          type: string
 components:
   securitySchemes:
     bearerAuth:
