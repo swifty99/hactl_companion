@@ -12,6 +12,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   release:
@@ -47,25 +48,6 @@ jobs:
             echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Bump version in pyproject.toml
-        if: steps.check.outputs.exists == 'false'
-        run: |
-          sed -i "s/^version = .*/version = \"${{ steps.version.outputs.ver }}\"/" pyproject.toml
-
-      - name: Bump version in OpenAPI spec
-        if: steps.check.outputs.exists == 'false'
-        run: |
-          sed -i "s/^  version: .*/  version: ${{ steps.version.outputs.ver }}/" openapi/companion-v1.yaml
-
-      - name: Commit version bump
-        if: steps.check.outputs.exists == 'false'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add pyproject.toml openapi/companion-v1.yaml
-          git commit -m "release: ${{ steps.version.outputs.title }}"
-          git push
-
       - name: Create GitHub Release
         if: steps.check.outputs.exists == 'false'
         env:
@@ -76,3 +58,24 @@ jobs:
             --title "${{ steps.version.outputs.title }}" \
             --generate-notes \
             --target main
+
+      - name: Open version-bump PR
+        if: steps.check.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH="release/${{ steps.version.outputs.title }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          sed -i "s/^version = .*/version = \"${{ steps.version.outputs.ver }}\"/" pyproject.toml
+          sed -i "s/^  version: .*/  version: ${{ steps.version.outputs.ver }}/" openapi/companion-v1.yaml
+          git add pyproject.toml openapi/companion-v1.yaml
+          git commit -m "release: bump version to ${{ steps.version.outputs.ver }}"
+          git push -u origin "$BRANCH"
+          gh pr create \
+            --title "release: bump version to ${{ steps.version.outputs.ver }}" \
+            --body "Automated version bump for release ${{ steps.version.outputs.title }}." \
+            --label chore \
+            --head "$BRANCH" \
+            --base main
