@@ -1,2 +1,2 @@
-#!/usr/bin/with-contenv bashio
+#!/bin/bash
 exec python3 -m companion

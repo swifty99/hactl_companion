@@ -152,31 +152,118 @@ class TestConfigWrite:
         assert r.status_code == 400
 
 
-class TestCoreLogs:
-    """Tests that read HA Core's log file from /config/home-assistant.log."""
+class TestAutomationsCRUD:
+    """Integration tests for automation CRUD endpoints."""
 
-    def test_core_log_readable(self, companion_url: str, auth_headers: dict[str, str], _ha_ready: None) -> None:
+    def test_create_and_list_automation(
+        self, companion_url: str, auth_headers: dict[str, str], _ha_ready: None
+    ) -> None:
+        # First write an automations.yaml so endpoints work
+        automations_yaml = """- id: integ_test_auto_1
+  alias: Integration Test Auto
+  trigger:
+    - platform: time
+      at: "12:00:00"
+  action:
+    - service: light.turn_on
+"""
+        r = requests.put(
+            f"{companion_url}/v1/config/file",
+            params={"path": "automations.yaml", "dry_run": "false"},
+            data=automations_yaml,
+            headers=auth_headers,
+            timeout=10,
+        )
+        assert r.status_code == 200
+
+        # List automations
+        r = requests.get(f"{companion_url}/v1/config/automations", headers=auth_headers, timeout=10)
+        assert r.status_code == 200
+        data = r.json()
+        assert "automations" in data
+        assert len(data["automations"]) >= 1
+
+    def test_get_automation_by_id(self, companion_url: str, auth_headers: dict[str, str], _ha_ready: None) -> None:
         r = requests.get(
-            f"{companion_url}/v1/logs/core",
-            params={"lines": "50"},
+            f"{companion_url}/v1/config/automation",
+            params={"id": "integ_test_auto_1"},
             headers=auth_headers,
             timeout=10,
         )
         assert r.status_code == 200
         data = r.json()
-        assert data["source"] == "core"
-        assert data["count"] > 0
-        assert isinstance(data["lines"], list)
+        assert data["id"] == "integ_test_auto_1"
+        assert "content" in data
 
-    def test_core_log_filter_errors(self, companion_url: str, auth_headers: dict[str, str], _ha_ready: None) -> None:
-        r = requests.get(
-            f"{companion_url}/v1/logs/core",
-            params={"lines": "200", "level": "error"},
+
+class TestScriptsCRUD:
+    """Integration tests for script CRUD endpoints."""
+
+    def test_create_and_list_scripts(self, companion_url: str, auth_headers: dict[str, str], _ha_ready: None) -> None:
+        scripts_yaml = """integ_test_script:
+  alias: Integration Test Script
+  mode: single
+  sequence:
+    - service: light.turn_on
+"""
+        r = requests.put(
+            f"{companion_url}/v1/config/file",
+            params={"path": "scripts.yaml", "dry_run": "false"},
+            data=scripts_yaml,
             headers=auth_headers,
             timeout=10,
         )
         assert r.status_code == 200
-        # May or may not have errors — just verify it returns a valid response
+
+        r = requests.get(f"{companion_url}/v1/config/scripts", headers=auth_headers, timeout=10)
+        assert r.status_code == 200
         data = r.json()
-        assert isinstance(data["lines"], list)
-        assert isinstance(data["count"], int)
+        assert "scripts" in data
+        assert len(data["scripts"]) >= 1
+
+    def test_get_script_by_id(self, companion_url: str, auth_headers: dict[str, str], _ha_ready: None) -> None:
+        r = requests.get(
+            f"{companion_url}/v1/config/script",
+            params={"id": "integ_test_script"},
+            headers=auth_headers,
+            timeout=10,
+        )
+        assert r.status_code == 200
+        data = r.json()
+        assert data["id"] == "integ_test_script"
+
+
+class TestTemplatesCRUD:
+    """Integration tests for template CRUD endpoints."""
+
+    def test_create_and_list_templates(self, companion_url: str, auth_headers: dict[str, str], _ha_ready: None) -> None:
+        templates_yaml = """- sensor:
+    - name: "Integration Test Sensor"
+      unique_id: integ_test_tpl_1
+      state: "{{ 42 }}"
+"""
+        r = requests.put(
+            f"{companion_url}/v1/config/file",
+            params={"path": "template.yaml", "dry_run": "false"},
+            data=templates_yaml,
+            headers=auth_headers,
+            timeout=10,
+        )
+        assert r.status_code == 200
+
+        r = requests.get(f"{companion_url}/v1/config/templates", headers=auth_headers, timeout=10)
+        assert r.status_code == 200
+        data = r.json()
+        assert "templates" in data
+        assert len(data["templates"]) >= 1
+
+    def test_get_template_by_id(self, companion_url: str, auth_headers: dict[str, str], _ha_ready: None) -> None:
+        r = requests.get(
+            f"{companion_url}/v1/config/template",
+            params={"id": "integ_test_tpl_1"},
+            headers=auth_headers,
+            timeout=10,
+        )
+        assert r.status_code == 200
+        data = r.json()
+        assert data["unique_id"] == "integ_test_tpl_1"

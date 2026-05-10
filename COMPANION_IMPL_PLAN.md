@@ -16,8 +16,8 @@ Companion exists because HA exposes **zero API** for:
 
 hactl already handles via HA API:
 - Reload: `POST /api/services/{domain}/reload`
-- Config check: WS `call_service` → `homeassistant/check_config`
-- Logs: WS `system_log/list` + REST `/api/error_log`
+- Config check: WS `call_ser`vice` → `homeassistant/check_config`
+- Logs: WS `system_log/list + REST `/api/error_log`
 - Config entries: WS `config/entries`
 - Supervisor: WS `hassio/addon/info`
 

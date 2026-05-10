@@ -93,6 +93,10 @@ _STATUS_SCHEMA = {
     "type": "object",
     "properties": {"status": {"type": "string"}},
 }
+_RELOAD_SCHEMA = {
+    "type": "object",
+    "properties": {"status": {"type": "string"}, "domain": {"type": "string"}},
+}
 _CREATED_SCHEMA = {
     "type": "object",
     "properties": {"status": {"type": "string"}, "id": {"type": "string"}},
@@ -272,6 +276,15 @@ ENDPOINT_META: dict[tuple[str, str], dict[str, object]] = {
         "tags": ["automations"],
         "parameters": [{"name": "id", "in": "query", "required": True, "schema": {"type": "string"}}],
         "response_schema": _STATUS_SCHEMA,
+    },
+    # HA CLI
+    ("POST", "/v1/ha/reload/{domain}"): {
+        "summary": "Reload an HA integration domain",
+        "tags": ["ha"],
+        "parameters": [
+            {"name": "domain", "in": "path", "required": True, "schema": {"type": "string"}},
+        ],
+        "response_schema": _RELOAD_SCHEMA,
     },
 }
 

@@ -1,5 +1,5 @@
 name: "hactl companion"
-version: "0.2.0"
+version: "0.3.0"
 slug: hactl_companion
 description: "Exposes HA-internal config, logs, and Supervisor API for hactl CLI"
 arch:

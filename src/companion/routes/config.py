@@ -80,7 +80,7 @@ async def get_config_file(request: web.Request) -> web.Response:
         resolver = YamlResolver(base)
         try:
             data = resolver.load(rel_path, resolve=True)
-            content = resolver.dump_to_string(data)
+            content = target.read_text(encoding="utf-8") if data is None else resolver.dump_to_string(data)
         except (PermissionError, ValueError) as exc:
             raise web.HTTPForbidden(text=str(exc)) from exc
         except FileNotFoundError as exc:

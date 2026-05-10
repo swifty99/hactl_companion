@@ -9,7 +9,7 @@ from typing import Any
 from aiohttp import web
 
 from companion import __version__
-from companion.routes import automations, config, health, scripts, templates
+from companion.routes import automations, config, ha, health, scripts, templates
 
 # Paths that do not require authentication
 AUTH_EXEMPT_PATHS: set[str] = {"/v1/health"}
@@ -59,5 +59,6 @@ def create_app(config_base_path: str = "/config") -> web.Application:
     register_routes(app, templates)
     register_routes(app, scripts)
     register_routes(app, automations)
+    register_routes(app, ha)
 
     return app

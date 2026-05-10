@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: hactl-companion API
-  version: 0.2.0
+  version: 0.3.0
   description: YAML file access API for Home Assistant. Provides structured CRUD
     for templates, scripts, and automations, plus raw config file read/write 
     with !include resolution.
@@ -489,6 +489,29 @@ paths:
       parameters:
       - name: id
         in: query
+        required: true
+        schema:
+          type: string
+  /v1/ha/reload/{domain}:
+    post:
+      summary: Reload an HA integration domain
+      tags:
+      - ha
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  domain:
+                    type: string
+      parameters:
+      - name: domain
+        in: path
         required: true
         schema:
           type: string

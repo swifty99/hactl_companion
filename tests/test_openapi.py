@@ -18,7 +18,7 @@ def test_spec_is_valid_openapi() -> None:
 
 def test_spec_has_correct_version() -> None:
     spec = generate_spec()
-    assert spec["info"]["version"] == "0.2.0"  # type: ignore[index]
+    assert spec["info"]["version"] == "0.3.0"  # type: ignore[index]
 
 
 def test_all_routes_have_spec_entry() -> None:
@@ -66,8 +66,8 @@ def test_write_spec_to_file(tmp_path: Path) -> None:
 
 
 def test_spec_has_20_endpoints() -> None:
-    """Spec should have exactly 20 endpoint operations (v2 API surface)."""
-    assert len(ENDPOINT_META) == 20
+    """Spec should have exactly 21 endpoint operations."""
+    assert len(ENDPOINT_META) == 21
 
 
 def test_spec_paths_count() -> None:
@@ -75,5 +75,5 @@ def test_spec_paths_count() -> None:
     spec = generate_spec()
     paths = spec["paths"]
     assert isinstance(paths, dict)
-    # health(1) + config(3) + templates(2) + scripts(2) + automations(2) = 10 paths
-    assert len(paths) == 10
+    # health(1) + config(3) + templates(2) + scripts(2) + automations(2) + ha(1) = 11 paths
+    assert len(paths) == 11

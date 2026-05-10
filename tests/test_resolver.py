@@ -62,3 +62,24 @@ async def test_resolve_secrets_include_denied(
     (config_dir / "secrets.yaml").write_text("wifi_password: hunter2\n")
     resp = await client.get("/v1/config/file?path=sneaky.yaml&resolve=true", headers=auth_headers)
     assert resp.status == 403
+
+
+async def test_resolve_does_not_return_null(client: TestClient, auth_headers: dict[str, str]) -> None:
+    """resolve=true on configuration.yaml must never return 'null' as content."""
+    resp = await client.get("/v1/config/file?path=configuration.yaml&resolve=true", headers=auth_headers)
+    assert resp.status == 200
+    data = await resp.json()
+    content = data["content"]
+    assert content.strip() != "null"
+    assert not content.startswith("null\n")
+
+
+async def test_resolve_empty_file_falls_back(
+    client: TestClient, auth_headers: dict[str, str], config_dir: Path
+) -> None:
+    """An empty YAML file with resolve=true should return the raw content, not 'null'."""
+    (config_dir / "empty.yaml").write_text("# just a comment\n")
+    resp = await client.get("/v1/config/file?path=empty.yaml&resolve=true", headers=auth_headers)
+    assert resp.status == 200
+    data = await resp.json()
+    assert data["content"] == "# just a comment\n"
