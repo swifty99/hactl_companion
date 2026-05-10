@@ -6,6 +6,7 @@ on:
       - "v*"
   release:
     types: [published]
+  workflow_dispatch: {} # triggered by monthly-release workflow
 
 permissions:
   contents: write
@@ -70,9 +71,13 @@ jobs:
       - name: Append Docker image info to release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ github.event.release.tag_name }}
+          TAG: ${{ github.ref_name }}
           REPO: ${{ github.repository }}
         run: |
+          if ! gh release view "$TAG" --repo "$REPO" > /dev/null 2>&1; then
+            echo "No release found for $TAG — skipping annotation"
+            exit 0
+          fi
           VERSION="${TAG#v}"
           MINOR="${VERSION%.*}"
           cat >> /tmp/extra.md <<EOF

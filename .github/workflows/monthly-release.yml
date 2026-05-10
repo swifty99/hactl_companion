@@ -59,6 +59,15 @@ jobs:
             --generate-notes \
             --target main
 
+      - name: Trigger release workflow (Docker build & push)
+        if: steps.check.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run release.yml \
+            --repo "${{ github.repository }}" \
+            --ref "${{ steps.version.outputs.tag }}"
+
       - name: Open version-bump PR
         if: steps.check.outputs.exists == 'false'
         env:
