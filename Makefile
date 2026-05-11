@@ -1,15 +1,23 @@
 COMPOSE_FILE := docker-compose.integration.yaml
+WG_COMPOSE_FILE := docker-compose.wireguard.yaml
 
-.PHONY: test test-int lint fmt clean spec
+.PHONY: test test-int test-wg lint fmt clean spec
 
 test:
 	uv run pytest tests/ --ignore=tests/integration -v --tb=short
 
 test-int:
 	docker compose -f $(COMPOSE_FILE) up -d --build
-	uv run pytest tests/integration -v --tb=short -x; \
+	uv run pytest tests/integration -v --tb=short -x --ignore=tests/integration/test_wireguard.py; \
 	status=$$?; \
 	docker compose -f $(COMPOSE_FILE) down -v; \
+	exit $$status
+
+test-wg:
+	docker compose -f $(WG_COMPOSE_FILE) up -d --build
+	uv run pytest tests/integration/test_wireguard.py -v --tb=short -x; \
+	status=$$?; \
+	docker compose -f $(WG_COMPOSE_FILE) down -v; \
 	exit $$status
 
 lint:
@@ -25,3 +33,4 @@ spec:
 
 clean:
 	docker compose -f $(COMPOSE_FILE) down -v 2>nul || true
+	docker compose -f $(WG_COMPOSE_FILE) down -v 2>nul || true
