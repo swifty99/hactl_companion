@@ -12,6 +12,8 @@ ingress_entry: /
 hassio_api: true
 hassio_role: manager
 homeassistant_api: true
+privileged:
+  - NET_ADMIN
 map:
   - type: homeassistant_config
     read_only: false

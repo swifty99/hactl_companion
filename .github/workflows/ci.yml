@@ -60,3 +60,16 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - run: docker build -t hactl-companion:test .
+
+  test-wireguard:
+    name: WireGuard Integration
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v8.1.0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: uv sync --extra dev --extra integration
+      - name: Run WireGuard integration tests
+        run: make test-wg

@@ -105,6 +105,87 @@ _CREATED_UID_SCHEMA = {
     "type": "object",
     "properties": {"status": {"type": "string"}, "unique_id": {"type": "string"}},
 }
+_WG_CONFIG_RESPONSE = {
+    "type": "object",
+    "properties": {"status": {"type": "string"}, "tunnel": {"type": "string"}},
+}
+_WG_START_RESPONSE = {
+    "type": "object",
+    "properties": {
+        "status": {"type": "string"},
+        "tunnel": {"type": "string"},
+        "auto_enable": {"type": "boolean"},
+    },
+}
+_WG_STOP_RESPONSE = {
+    "type": "object",
+    "properties": {"status": {"type": "string"}, "tunnel": {"type": "string"}},
+}
+_WG_STATUS_RESPONSE = {
+    "type": "object",
+    "properties": {
+        "tunnel": {"type": "string"},
+        "state": {"type": "string", "enum": ["active", "inactive"]},
+        "auto_enable": {"type": "boolean"},
+        "interface": {
+            "type": "object",
+            "properties": {
+                "public_key": {"type": "string"},
+                "listening_port": {"type": "integer"},
+            },
+        },
+        "peers": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "public_key": {"type": "string"},
+                    "endpoint": {"type": "string"},
+                    "allowed_ips": {"type": "string"},
+                    "latest_handshake": {"type": "string"},
+                    "transfer_rx": {"type": "string"},
+                    "transfer_tx": {"type": "string"},
+                },
+            },
+        },
+    },
+}
+_WG_CONFIG_JSON_BODY = {
+    "content": {
+        "application/json": {
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "tunnel_name": {"type": "string", "default": "wg0"},
+                    "interface": {
+                        "type": "object",
+                        "required": ["private_key", "address"],
+                        "properties": {
+                            "private_key": {"type": "string"},
+                            "address": {"type": "string"},
+                            "dns": {"type": "string"},
+                        },
+                    },
+                    "peers": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "required": ["public_key", "allowed_ips"],
+                            "properties": {
+                                "public_key": {"type": "string"},
+                                "endpoint": {"type": "string"},
+                                "allowed_ips": {"type": "string"},
+                                "persistent_keepalive": {"type": "integer"},
+                            },
+                        },
+                    },
+                },
+            },
+        },
+        "text/plain": {"schema": {"type": "string"}},
+    },
+    "required": True,
+}
 
 # Map of (method, path) -> endpoint metadata
 ENDPOINT_META: dict[tuple[str, str], dict[str, object]] = {
@@ -285,6 +366,47 @@ ENDPOINT_META: dict[tuple[str, str], dict[str, object]] = {
             {"name": "domain", "in": "path", "required": True, "schema": {"type": "string"}},
         ],
         "response_schema": _RELOAD_SCHEMA,
+    },
+    # WireGuard
+    ("POST", "/v1/wireguard/config"): {
+        "summary": "Push WireGuard tunnel configuration",
+        "tags": ["wireguard"],
+        "parameters": [
+            {"name": "tunnel", "in": "query", "required": False, "schema": {"type": "string", "default": "wg0"}},
+        ],
+        "requestBody": _WG_CONFIG_JSON_BODY,
+        "response_schema": _WG_CONFIG_RESPONSE,
+    },
+    ("POST", "/v1/wireguard/start"): {
+        "summary": "Start a WireGuard tunnel",
+        "tags": ["wireguard"],
+        "parameters": [
+            {"name": "tunnel", "in": "query", "required": False, "schema": {"type": "string", "default": "wg0"}},
+            {"name": "auto_enable", "in": "query", "required": False, "schema": {"type": "string", "default": "false"}},
+        ],
+        "response_schema": _WG_START_RESPONSE,
+    },
+    ("POST", "/v1/wireguard/stop"): {
+        "summary": "Stop a WireGuard tunnel",
+        "tags": ["wireguard"],
+        "parameters": [
+            {"name": "tunnel", "in": "query", "required": False, "schema": {"type": "string", "default": "wg0"}},
+            {
+                "name": "auto_disable",
+                "in": "query",
+                "required": False,
+                "schema": {"type": "string", "default": "false"},
+            },
+        ],
+        "response_schema": _WG_STOP_RESPONSE,
+    },
+    ("GET", "/v1/wireguard/status"): {
+        "summary": "Get WireGuard tunnel status",
+        "tags": ["wireguard"],
+        "parameters": [
+            {"name": "tunnel", "in": "query", "required": False, "schema": {"type": "string", "default": "wg0"}},
+        ],
+        "response_schema": _WG_STATUS_RESPONSE,
     },
 }
 
