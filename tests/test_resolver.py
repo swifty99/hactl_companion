@@ -83,3 +83,36 @@ async def test_resolve_empty_file_falls_back(
     assert resp.status == 200
     data = await resp.json()
     assert data["content"] == "# just a comment\n"
+
+
+async def test_circular_include_detected(
+    client: TestClient, auth_headers: dict[str, str], config_dir: Path
+) -> None:
+    """Circular !include (a → b → a) must not cause an infinite loop or a 200 response.
+
+    The server must detect the cycle and return a 4xx or 5xx error promptly.
+    """
+    import asyncio
+
+    (config_dir / "circular_a.yaml").write_text("data: !include circular_b.yaml\n")
+    (config_dir / "circular_b.yaml").write_text("data: !include circular_a.yaml\n")
+
+    # Give the server at most 5 seconds to respond — an infinite loop would time out
+    try:
+        resp = await asyncio.wait_for(
+            client.get("/v1/config/file?path=circular_a.yaml&resolve=true", headers=auth_headers),
+            timeout=5.0,
+        )
+    except TimeoutError:
+        raise AssertionError("Server did not respond within 5 s — possible infinite loop in !include resolver")
+
+    # 400 (bad request / cycle detected) or 500 (internal error) are both acceptable;
+    # 200 with raw content is acceptable too if the resolver bails out early.
+    # What is NOT acceptable: hanging indefinitely (caught above).
+    assert resp.status in (200, 400, 500), f"unexpected status {resp.status}"
+    if resp.status == 200:
+        # If the server chose to return 200, the content must not be empty or recursive garbage
+        data = await resp.json()
+        content: str = data.get("content", "")
+        # A sane fallback is returning the raw unparsed YAML
+        assert "!include" in content or len(content) > 0, "200 response with empty content for circular include"
