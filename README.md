@@ -33,6 +33,11 @@ HA OS / Supervised
 | GET | `/v1/config/block?path=...&id=...` | Read a specific block |
 | PUT | `/v1/config/file?path=...&dry_run=true` | Diff preview |
 | PUT | `/v1/config/file?path=...&dry_run=false` | Write with backup + validation |
+| GET | `/v1/config/helpers?domain=...` | List helpers (optional domain filter) |
+| GET | `/v1/config/helper?id=...` | Get a single helper definition |
+| POST | `/v1/config/helper` | Create a helper (JSON: domain, id, content) |
+| PUT | `/v1/config/helper` | Update a helper (JSON: domain, id, content) |
+| DELETE | `/v1/config/helper?domain=...&id=...` | Delete a helper |
 
 ## Development
 

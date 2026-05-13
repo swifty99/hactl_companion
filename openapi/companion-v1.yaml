@@ -492,6 +492,116 @@ paths:
         required: true
         schema:
           type: string
+  /v1/config/helpers:
+    get:
+      summary: List all helpers
+      tags:
+      - helpers
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  helpers:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        name:
+                          type: string
+                        domain:
+                          type: string
+                        icon:
+                          type: string
+      parameters:
+      - name: domain
+        in: query
+        required: false
+        schema:
+          type: string
+  /v1/config/helper:
+    get:
+      summary: Get single helper definition
+      tags:
+      - helpers
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  domain:
+                    type: string
+                  content:
+                    type: string
+      parameters:
+      - name: id
+        in: query
+        required: true
+        schema:
+          type: string
+    post:
+      summary: Create new helper
+      tags:
+      - helpers
+      responses:
+        '201':
+          description: Successful response
+          content:
+            application/json:
+              schema: *id002
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: true
+    put:
+      summary: Update helper definition
+      tags:
+      - helpers
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema: *id001
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: true
+    delete:
+      summary: Delete helper
+      tags:
+      - helpers
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema: *id001
+      parameters:
+      - name: domain
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: id
+        in: query
+        required: true
+        schema:
+          type: string
   /v1/ha/reload/{domain}:
     post:
       summary: Reload an HA integration domain
@@ -515,6 +625,186 @@ paths:
         required: true
         schema:
           type: string
+  /v1/wireguard/config:
+    post:
+      summary: Push WireGuard tunnel configuration
+      tags:
+      - wireguard
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  tunnel:
+                    type: string
+      parameters:
+      - name: tunnel
+        in: query
+        required: false
+        schema:
+          type: string
+          default: wg0
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tunnel_name:
+                  type: string
+                  default: wg0
+                interface:
+                  type: object
+                  required:
+                  - private_key
+                  - address
+                  properties:
+                    private_key:
+                      type: string
+                    address:
+                      type: string
+                    dns:
+                      type: string
+                peers:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                    - public_key
+                    - allowed_ips
+                    properties:
+                      public_key:
+                        type: string
+                      endpoint:
+                        type: string
+                      allowed_ips:
+                        type: string
+                      persistent_keepalive:
+                        type: integer
+          text/plain:
+            schema:
+              type: string
+        required: true
+  /v1/wireguard/start:
+    post:
+      summary: Start a WireGuard tunnel
+      tags:
+      - wireguard
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  tunnel:
+                    type: string
+                  auto_enable:
+                    type: boolean
+      parameters:
+      - name: tunnel
+        in: query
+        required: false
+        schema:
+          type: string
+          default: wg0
+      - name: auto_enable
+        in: query
+        required: false
+        schema:
+          type: string
+          default: 'false'
+  /v1/wireguard/stop:
+    post:
+      summary: Stop a WireGuard tunnel
+      tags:
+      - wireguard
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  tunnel:
+                    type: string
+      parameters:
+      - name: tunnel
+        in: query
+        required: false
+        schema:
+          type: string
+          default: wg0
+      - name: auto_disable
+        in: query
+        required: false
+        schema:
+          type: string
+          default: 'false'
+  /v1/wireguard/status:
+    get:
+      summary: Get WireGuard tunnel status
+      tags:
+      - wireguard
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tunnel:
+                    type: string
+                  state:
+                    type: string
+                    enum:
+                    - active
+                    - inactive
+                  auto_enable:
+                    type: boolean
+                  interface:
+                    type: object
+                    properties:
+                      public_key:
+                        type: string
+                      listening_port:
+                        type: integer
+                  peers:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        public_key:
+                          type: string
+                        endpoint:
+                          type: string
+                        allowed_ips:
+                          type: string
+                        latest_handshake:
+                          type: string
+                        transfer_rx:
+                          type: string
+                        transfer_tx:
+                          type: string
+      parameters:
+      - name: tunnel
+        in: query
+        required: false
+        schema:
+          type: string
+          default: wg0
 components:
   securitySchemes:
     bearerAuth:
