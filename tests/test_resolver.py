@@ -104,7 +104,9 @@ async def test_circular_include_detected(
             timeout=5.0,
         )
     except TimeoutError:
-        raise AssertionError("Server did not respond within 5 s — possible infinite loop in !include resolver")
+        raise AssertionError(
+            "Server did not respond within 5 s — possible infinite loop in !include resolver"
+        ) from None
 
     # 400 (bad request / cycle detected) or 500 (internal error) are both acceptable;
     # 200 with raw content is acceptable too if the resolver bails out early.
