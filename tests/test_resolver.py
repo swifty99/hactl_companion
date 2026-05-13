@@ -85,9 +85,7 @@ async def test_resolve_empty_file_falls_back(
     assert data["content"] == "# just a comment\n"
 
 
-async def test_circular_include_detected(
-    client: TestClient, auth_headers: dict[str, str], config_dir: Path
-) -> None:
+async def test_circular_include_detected(client: TestClient, auth_headers: dict[str, str], config_dir: Path) -> None:
     """Circular !include (a → b → a) must not cause an infinite loop or a 200 response.
 
     The server must detect the cycle and return a 4xx or 5xx error promptly.
