@@ -492,6 +492,116 @@ paths:
         required: true
         schema:
           type: string
+  /v1/config/helpers:
+    get:
+      summary: List all helpers
+      tags:
+      - helpers
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  helpers:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        name:
+                          type: string
+                        domain:
+                          type: string
+                        icon:
+                          type: string
+      parameters:
+      - name: domain
+        in: query
+        required: false
+        schema:
+          type: string
+  /v1/config/helper:
+    get:
+      summary: Get single helper definition
+      tags:
+      - helpers
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  domain:
+                    type: string
+                  content:
+                    type: string
+      parameters:
+      - name: id
+        in: query
+        required: true
+        schema:
+          type: string
+    post:
+      summary: Create new helper
+      tags:
+      - helpers
+      responses:
+        '201':
+          description: Successful response
+          content:
+            application/json:
+              schema: *id002
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: true
+    put:
+      summary: Update helper definition
+      tags:
+      - helpers
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema: *id001
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: true
+    delete:
+      summary: Delete helper
+      tags:
+      - helpers
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema: *id001
+      parameters:
+      - name: domain
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: id
+        in: query
+        required: true
+        schema:
+          type: string
   /v1/ha/reload/{domain}:
     post:
       summary: Reload an HA integration domain

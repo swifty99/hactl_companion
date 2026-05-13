@@ -105,6 +105,27 @@ _CREATED_UID_SCHEMA = {
     "type": "object",
     "properties": {"status": {"type": "string"}, "unique_id": {"type": "string"}},
 }
+_HELPER_LIST_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "helpers": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "id": {"type": "string"},
+                    "name": {"type": "string"},
+                    "domain": {"type": "string"},
+                    "icon": {"type": "string"},
+                },
+            },
+        }
+    },
+}
+_HELPER_SCHEMA = {
+    "type": "object",
+    "properties": {"id": {"type": "string"}, "domain": {"type": "string"}, "content": {"type": "string"}},
+}
 _WG_CONFIG_RESPONSE = {
     "type": "object",
     "properties": {"status": {"type": "string"}, "tunnel": {"type": "string"}},
@@ -356,6 +377,49 @@ ENDPOINT_META: dict[tuple[str, str], dict[str, object]] = {
         "summary": "Delete automation",
         "tags": ["automations"],
         "parameters": [{"name": "id", "in": "query", "required": True, "schema": {"type": "string"}}],
+        "response_schema": _STATUS_SCHEMA,
+    },
+    # Helpers
+    ("GET", "/v1/config/helpers"): {
+        "summary": "List all helpers",
+        "tags": ["helpers"],
+        "parameters": [
+            {"name": "domain", "in": "query", "required": False, "schema": {"type": "string"}},
+        ],
+        "response_schema": _HELPER_LIST_SCHEMA,
+    },
+    ("GET", "/v1/config/helper"): {
+        "summary": "Get single helper definition",
+        "tags": ["helpers"],
+        "parameters": [{"name": "id", "in": "query", "required": True, "schema": {"type": "string"}}],
+        "response_schema": _HELPER_SCHEMA,
+    },
+    ("POST", "/v1/config/helper"): {
+        "summary": "Create new helper",
+        "tags": ["helpers"],
+        "requestBody": {
+            "content": {"application/json": {"schema": {"type": "object"}}},
+            "required": True,
+        },
+        "response_schema": _CREATED_SCHEMA,
+        "response_status": 201,
+    },
+    ("PUT", "/v1/config/helper"): {
+        "summary": "Update helper definition",
+        "tags": ["helpers"],
+        "requestBody": {
+            "content": {"application/json": {"schema": {"type": "object"}}},
+            "required": True,
+        },
+        "response_schema": _STATUS_SCHEMA,
+    },
+    ("DELETE", "/v1/config/helper"): {
+        "summary": "Delete helper",
+        "tags": ["helpers"],
+        "parameters": [
+            {"name": "domain", "in": "query", "required": True, "schema": {"type": "string"}},
+            {"name": "id", "in": "query", "required": True, "schema": {"type": "string"}},
+        ],
         "response_schema": _STATUS_SCHEMA,
     },
     # HA CLI
